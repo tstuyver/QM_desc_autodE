@@ -36,7 +36,7 @@ def get_opt_molecules(args, molecule_list, logger):
     opt_molecules = []
 
     with ProcessPool(max_workers=args.xtb_n_procs) as pool:
-        future = pool.map(get_geometry, molecule_list, timeout=600)
+        future = pool.map(get_geometry, molecule_list, timeout=900)
 
         iterator = future.result()
         
