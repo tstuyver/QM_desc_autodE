@@ -5,8 +5,10 @@ import subprocess
 from .file_parser import xyz2com
 from .grab_QM_descriptors import read_log
 
+solvent_dict = {'water': 'Water', 'dmf': 'n,n-DiMethylFormamide'}
 
-def dft_scf(folder, molecule, g16_path, level_of_theory, n_procs, logger):
+
+def dft_scf(folder, molecule, g16_path, level_of_theory, n_procs, logger, solvent_name):
     print(molecule.xyz_file)
     basename = os.path.basename(molecule.xyz_file)
 
@@ -43,8 +45,12 @@ def dft_scf(folder, molecule, g16_path, level_of_theory, n_procs, logger):
                     mult = 1
                 elif mol_radical_electrons == 1:
                     mult = 2
-                head = '%chk={}.chk\n%nprocshared={}\n# {}/{} nmr=GIAO scf=(maxcycle=512, xqc) ' \
-                        'pop=(full,mbs,hirshfeld,nboread)\n'.format(file_name, n_procs, xc, ao)
+                if solvent_name:
+                    head = f'%chk={file_name}.chk\n%nprocshared={n_procs}\n# {xc}/{ao} nmr=GIAO scf=(maxcycle=512, xqc) ' \
+                            f'pop=(full,mbs,hirshfeld,nboread) scrf=(SMD, Solvent={solvent_dict[solvent_name]})\n'
+                else:
+                    head = f'%chk={file_name}.chk\n%nprocshared={n_procs}\n# {xc}/{ao} nmr=GIAO scf=(maxcycle=512, xqc) ' \
+                            'pop=(full,mbs,hirshfeld,nboread)\n'
             elif jobtype == 'plus1':
                 charge = mol_charge + 1
                 if mol_radical_electrons == 0:
@@ -103,6 +109,7 @@ def dft_scf(folder, molecule, g16_path, level_of_theory, n_procs, logger):
         # SCF
         QM_descriptor_return['SCF_plus1'] = QM_descriptors['plus1']['SCF']
         QM_descriptor_return['SCF_minus1'] = QM_descriptors['minus1']['SCF']
+        QM_descriptor_return['SCF_multiplicity'] = QM_descriptors['multiplicity']['SCF']
 
         os.remove(molecule.xyz_file)
         logger.info('Gaussian single-point calculations for {} completed'.format(file_name))

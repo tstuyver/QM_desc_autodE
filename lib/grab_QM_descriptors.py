@@ -66,7 +66,3 @@ def read_log(log, jtype, smiles):
         QMs['SCF'] = log.SCF if log.SCF is not None else np.nan
 
     return QMs
-
-
-
-

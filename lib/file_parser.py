@@ -42,14 +42,3 @@ def _GetNPACharge(txt):
     df = pd.DataFrame(NPACharge, columns=columns.split())
     
     return df, txt[end_id:]
-
-
-
-
-
-
-
-
-
-
-

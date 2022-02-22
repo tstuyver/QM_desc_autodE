@@ -15,8 +15,8 @@ G16_PATH = '/home/gridsan/tstuyver/RMG_shared/Software/gaussian/g16'
 parser = ArgumentParser()
 parser.add_argument('--ismiles', type=str, required=False,
                     help='input smiles included in a .csv file')
-parser.add_argument('--output', type=str, default='QM_descriptors.pickle',
-                    help='output as a .pickle file')
+parser.add_argument('--solvent_name', type=str, default=None,
+                    help = 'whether or not to determine the descriptors in solvent')
 
 # xtb optimization
 parser.add_argument('--xtb_folder', type=str, default='XTB_opt',
@@ -51,7 +51,7 @@ if not os.path.isdir(args.xtb_folder):
     os.mkdir(args.xtb_folder)
 os.chdir(args.xtb_folder)
 
-molecule_list = [Molecule(x[0],x[1]) for x in df[['id','smiles']].values] 
+molecule_list = [Molecule(x[0],x[1],args.solvent_name) for x in df[['id','smiles']].values] 
 
 opt_molecules = get_opt_molecules(args, molecule_list, logger)
 
@@ -68,7 +68,7 @@ for molecule in opt_molecules:
         shutil.copyfile(os.path.join(args.xtb_folder, molecule.xyz_file),
                         os.path.join(args.DFT_folder, molecule.xyz_file))
         qm_descriptor = dft_scf(args.DFT_folder, molecule, G16_PATH, args.DFT_theory, args.DFT_n_procs,
-                                logger)
+                                logger, args.solvent_name)
         qm_descriptors.append(qm_descriptor)
     except Exception as e:
         for folder in [os.path.join(args.DFT_folder, 'neutral/'), os.path.join(args.DFT_folder, 'minus1/'), 
@@ -82,8 +82,8 @@ qm_descriptors = pd.DataFrame(qm_descriptors)
 qm_descriptors.to_csv(f'{output_name}.csv')
 qm_descriptors.to_pickle(f'{output_name}.pkl')
 
-subprocess.run(['tar', '-cf', os.path.join(pwd, f'xtb_{name}.tar'), os.path.join(pwd, args.xtb_folder)])
+subprocess.run(['tar', '-zcf', os.path.join(pwd, f'xtb_{name}.tar'), os.path.join(pwd, args.xtb_folder)])
 subprocess.run(['rm', '-r', os.path.join(pwd, args.xtb_folder)])
 
-subprocess.run(['tar', '-cf', os.path.join(pwd, f'dft_{name}.tar'), os.path.join(pwd, args.DFT_folder)])
+subprocess.run(['tar', '-zcf', os.path.join(pwd, f'dft_{name}.tar'), os.path.join(pwd, args.DFT_folder)])
 subprocess.run(['rm', '-r', os.path.join(pwd, args.DFT_folder)])

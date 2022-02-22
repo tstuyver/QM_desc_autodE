@@ -3,10 +3,13 @@ from pebble import ProcessPool
 
 class Molecule:
 
-    def __init__(self, id, smiles):
+    def __init__(self, id, smiles, solvent):
         self.smiles = smiles
         self.id = id
-        self.mol = ade.Molecule(name = f'geometry_{self.id}',smiles=f'{self.smiles}')
+        if solvent:
+            self.mol = ade.Molecule(name = f'geometry_{self.id}', smiles=f'{self.smiles}', solvent_name = solvent)
+        else:
+            self.mol = ade.Molecule(name = f'geometry_{self.id}',smiles=f'{self.smiles}')
 
         self._xyz_file = None
 

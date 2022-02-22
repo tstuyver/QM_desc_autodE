@@ -603,4 +603,3 @@ class XtbLog:
             m = re.search('TOTAL FREE ENERGY\s+(-?\d+\.\d+)', line)
             if m:
                 self.G = float(m[1])
-
