@@ -1,15 +1,22 @@
 import autode as ade
 from pebble import ProcessPool
+import os
+import shutil
+
 
 class Molecule:
-
     def __init__(self, id, smiles, solvent):
         self.smiles = smiles
         self.id = id
+        self.conformer_folder = str(self.id)
         if solvent:
-            self.mol = ade.Molecule(name = f'geometry_{self.id}', smiles=f'{self.smiles}', solvent_name = solvent)
+            self.mol = ade.Molecule(
+                name=f"geometry_{self.id}",
+                smiles=f"{self.smiles}",
+                solvent_name=solvent,
+            )
         else:
-            self.mol = ade.Molecule(name = f'geometry_{self.id}',smiles=f'{self.smiles}')
+            self.mol = ade.Molecule(name=f"geometry_{self.id}", smiles=f"{self.smiles}")
 
         self._xyz_file = None
 
@@ -19,14 +26,27 @@ class Molecule:
 
     @xyz_file.setter
     def xyz_file(self, filename):
-        if isinstance(filename,str):
+        if isinstance(filename, str):
             self._xyz_file = filename
 
     def generate_structure(self):
+        here = os.getcwd()
+        dir_path = os.path.join(here, str(self.id))
+
+        if not os.path.isdir(dir_path):
+            os.mkdir(dir_path)
+
+        os.chdir(dir_path)
+
         self.mol.find_lowest_energy_conformer(lmethod=ade.methods.XTB())
         self.mol.print_xyz_file()
 
-        self.xyz_file = f'geometry_{self.id}.xyz'
+        self.xyz_file = f"geometry_{self.id}.xyz"
+        shutil.copyfile(
+            os.path.join(dir_path, self.xyz_file),
+            os.path.join(here, self.xyz_file),
+        )
+        os.chdir(here)
 
 
 def get_geometry(mol):
@@ -42,24 +62,26 @@ def get_opt_molecules(args, molecule_list, logger):
         future = pool.map(get_geometry, molecule_list, timeout=900)
 
         iterator = future.result()
-        
+
         while True:
-            try: 
+            try:
                 result, id = next(iterator)
                 opt_molecules.append(result)
 
-                logger.info(f'optimization of {id} completed')
+                logger.info(f"optimization of {id} completed")
 
             except StopIteration:
                 break
             except TimeoutError as error:
-                logger.info(f'get_geometry call took more than {error.args} seconds')
+                logger.info(f"get_geometry call took more than {error.args} seconds")
                 raise
             except ValueError as error:
-                logger.info(f'get_geometry call failed due to ValueError: {error.args}')
+                logger.info(f"get_geometry call failed due to ValueError: {error.args}")
                 raise
             except Exception as error:
-                logger.info(f'get_geometry call failed due to an unexpected error: {error.args}')
+                logger.info(
+                    f"get_geometry call failed due to an unexpected error: {error.args}"
+                )
                 pass
 
         pool.close()
