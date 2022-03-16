@@ -1,4 +1,13 @@
 import pandas as pd
+from rdkit import Chem
+
+
+def unmap_smiles(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    [atom.SetAtomMapNum(0) for atom in mol.GetAtoms()]
+
+    return Chem.MolToSmiles(mol)
+
 
 class DescFileGenerator:
     def __init__(self, input_file, output_file, prefix):
@@ -18,14 +27,14 @@ class DescFileGenerator:
         reactants, products = rxn_smiles.split(">>")
 
         for reactant in reactants.split("."):
-            self.reactant_set.add(reactant)
+            self.reactant_set.add(unmap_smiles(reactant))
         for product in products.split("."):
-            self.product_set.add(product)
+            self.product_set.add(unmap_smiles(product))
 
     def get_dataframe_from_set(self, selected_set):
         df = pd.DataFrame(list(selected_set))
         df["id"] = df.index
-        df["id"] = df["id"].apply(lambda x: f'{self.prefix}_{x}')
+        df["id"] = df["id"].apply(lambda x: f"{self.prefix}_{x}")
         df.rename(columns={0: "smiles"}, inplace=True)
         df = df[["id", "smiles"]]
 
@@ -33,8 +42,8 @@ class DescFileGenerator:
 
     def write_reactant_csv(self):
         df_react = self.get_dataframe_from_set(self.reactant_set)
-        df_react.to_csv(f'{self.output_file}_reactants.csv')
+        df_react.to_csv(f"{self.output_file}_reactants.csv")
 
     def write_product_csv(self):
         df_prod = self.get_dataframe_from_set(self.product_set)
-        df_prod.to_csv(f'{self.output_file}_products.csv')
+        df_prod.to_csv(f"{self.output_file}_products.csv")
