@@ -95,18 +95,21 @@ for molecule in opt_molecules:
         )
         qm_descriptors.append(qm_descriptor)
     except Exception as e:
-        for folder in [
-            os.path.join(args.DFT_folder, "neutral/"),
-            os.path.join(args.DFT_folder, "minus1/"),
-            os.path.join(args.DFT_folder, "plus1/"),
-            os.path.join(args.DFT_folder, "multiplicity/"),
-        ]:
-            for fname in os.listdir(folder):
-                if "core" in fname:
-                    os.remove(os.path.join(folder, fname))
         logger.error(
             f"Gaussian single-point calculations for {os.path.splitext(molecule.xyz_file)[0]} failed: {e}"
         )
+        try:
+            for folder in [
+                os.path.join(args.DFT_folder, "neutral/"),
+                os.path.join(args.DFT_folder, "minus1/"),
+                os.path.join(args.DFT_folder, "plus1/"),
+                os.path.join(args.DFT_folder, "multiplicity/"),
+            ]:
+                for fname in os.listdir(folder):
+                    if "core" in fname:
+                        os.remove(os.path.join(folder, fname))
+        except Exception:
+            continue
 
 qm_descriptors = pd.DataFrame(qm_descriptors)
 qm_descriptors.to_csv(f"{output_name}.csv")
