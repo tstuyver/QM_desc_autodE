@@ -9,6 +9,7 @@ class Molecule:
         self.smiles = smiles
         self.id = id
         self.conformer_folder = str(self.id)
+        self.xtb_folder = os.getcwd()
         if solvent:
             self.mol = ade.Molecule(
                 name=f"geometry_{self.id}",
@@ -30,23 +31,24 @@ class Molecule:
             self._xyz_file = filename
 
     def generate_structure(self):
-        here = os.getcwd()
         dir_path = os.path.join(here, str(self.id))
 
         if not os.path.isdir(dir_path):
             os.mkdir(dir_path)
 
         os.chdir(dir_path)
+        try:
+            self.mol.find_lowest_energy_conformer(lmethod=ade.methods.XTB())
+            self.mol.print_xyz_file()
 
-        self.mol.find_lowest_energy_conformer(lmethod=ade.methods.XTB())
-        self.mol.print_xyz_file()
-
-        self.xyz_file = f"geometry_{self.id}.xyz"
-        shutil.copyfile(
-            os.path.join(dir_path, self.xyz_file),
-            os.path.join(here, self.xyz_file),
-        )
-        os.chdir(here)
+            self.xyz_file = f"geometry_{self.id}.xyz"
+            shutil.copyfile(
+                os.path.join(dir_path, self.xyz_file),
+                os.path.join(here, self.xyz_file),
+            )
+            os.chdir(self.xtb_folder)
+        except Exception:
+            os.chdir(self.xtb_folder)
 
 
 def get_geometry(mol):
