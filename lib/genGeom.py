@@ -10,6 +10,7 @@ class Molecule:
         self.id = id
         self.conformer_folder = str(self.id)
         self.xtb_folder = os.getcwd()
+        self.xyz_file = None
         if solvent:
             self.mol = ade.Molecule(
                 name=f"geometry_{self.id}",
@@ -31,7 +32,7 @@ class Molecule:
             self._xyz_file = filename
 
     def generate_structure(self):
-        dir_path = os.path.join(here, str(self.id))
+        dir_path = os.path.join(self.xtb_folder, str(self.id))
 
         if not os.path.isdir(dir_path):
             os.mkdir(dir_path)
@@ -44,7 +45,7 @@ class Molecule:
             self.xyz_file = f"geometry_{self.id}.xyz"
             shutil.copyfile(
                 os.path.join(dir_path, self.xyz_file),
-                os.path.join(here, self.xyz_file),
+                os.path.join(self.xtb_folder, self.xyz_file),
             )
             os.chdir(self.xtb_folder)
         except Exception:
@@ -53,8 +54,10 @@ class Molecule:
 
 def get_geometry(mol):
     mol.generate_structure()
-
-    return mol, mol.id
+    if mol.xyz_file is not None:
+        return mol, mol.id
+    else:
+        return None, mol.id
 
 
 def get_opt_molecules(args, molecule_list, logger):
@@ -68,9 +71,11 @@ def get_opt_molecules(args, molecule_list, logger):
         while True:
             try:
                 result, id = next(iterator)
-                opt_molecules.append(result)
-
-                logger.info(f"optimization of {id} completed")
+                if result != None:
+                    opt_molecules.append(result)
+                    logger.info(f"optimization of {id} completed")
+                else:
+                    logger.info(f"optimization for {id} failed")
 
             except StopIteration:
                 break
@@ -88,5 +93,7 @@ def get_opt_molecules(args, molecule_list, logger):
 
         pool.close()
         pool.join()
+
+    #opt_molecules = list(filter(None, opt_molecules))
 
     return opt_molecules
