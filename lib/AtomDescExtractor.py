@@ -33,19 +33,13 @@ def reorder_entry(entry_wrong_order, ordering):
     return np.array(entry_correct_order)
 
 
-def turn_elements_into_arrays(df, column_name):
+def turn_elements_into_arrays(df):
     # df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: np.array([float(x)]))
     #df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: np.array([map(float, x)]))
-    print(column_name)
-    df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: apply_func(x))
+    df = df.apply(lambda x: np.array(list(map(float, x))))
 
-def apply_func(argument):
-    print(argument)
-    try:
-        print(np.array(list(map(float, argument))))
-        return np.array(list(map(float, argument)))
-    except TypeError:
-        return []
+    return df
+
 
 def match_smiles(smiles, numbered_smiles_list):
     for numbered_smiles in numbered_smiles_list:
@@ -187,7 +181,7 @@ class AtomDescExtractor:
                                                             'fukui_neu', 'spin_dens_triplet']):
         df_chemprop = self.df_desc[[name for name in descriptor_list]]
         for name in descriptor_list:
-            df_chemprop = turn_elements_into_arrays(df_chemprop, name)
+            df_chemprop[name] = turn_elements_into_arrays(df_chemprop[name])
 
         df_chemprop.to_pickle(f'atom_desc_{self.output_name}_chemprop.pkl')
         df_chemprop.to_csv(f'atom_desc_{self.output_name}_chemprop.csv')

@@ -15,7 +15,7 @@ def strip_atom_map_num(smiles):
 
 def turn_elements_into_arrays(df, column_name):
     df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: np.array([float(x)]))
-
+    return df
 
 class RxnDescExtractor:
     def __init__(self, desc_file, reactions_file, output_name):
