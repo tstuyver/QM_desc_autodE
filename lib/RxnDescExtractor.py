@@ -27,6 +27,10 @@ class RxnDescExtractor:
 
         self.reaction_desc = self.determine_reaction_descs()
 
+    def return_valid_df_reactions(self):
+        df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles', 'solvent', 'temp', 'G_act']]
+        return df_return
+
     def determine_reaction_descs(self):
         self.df_reactions['G_orb'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_orbitals(x))
         self.df_reactions['G'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_scf(x))
@@ -93,7 +97,7 @@ class RxnDescExtractor:
                         dipolarophile = strip_atom_map_num(reactant)
                         electron_affinity = - self.mol_desc['reactants_lumo'][dipolarophile] * hartree 
             except Exception as e:
-                print(f'error for {rxn_smiles}: {e}')
+                print(f'Error for {rxn_smiles}: {e}')
                 return None
 
         return ionisation_potential - electron_affinity
@@ -130,13 +134,14 @@ class RxnDescExtractor:
                                 (- (self.mol_desc['reactants_lumo'][dipolarophile] + self.mol_desc['reactants_homo'][dipolarophile]) \
                                 - (self.mol_desc['reactants_plus'][dipolarophile] - self.mol_desc['reactants_singlet'][dipolarophile])) * hartree
             except Exception as e:
-                print(f'error for {rxn_smiles}: {e}')
+                print(f'Error for {rxn_smiles}: {e}')
                 return None
 
         return ionisation_potential - electron_affinity 
 
     def output_reaction_descs_chemprop(self, descriptor_list=['E_r', 'G', 'G_alt1', 'G_alt2']):
         df_chemprop = self.df_reactions[[name for name in descriptor_list]]
+        df_chemprop = df_chemprop.dropna()
         for name in descriptor_list:
             df_chemprop = turn_elements_into_arrays(df_chemprop, name)
 
@@ -146,6 +151,7 @@ class RxnDescExtractor:
     def output_reaction_descs_wln(self, descriptor_list=['E_r', 'G', 'G_alt1', 'G_alt2']):
         df_wln = self.df_reactions[['rxn_smiles'] + [name for name in descriptor_list]]
         df_wln = df_wln.rename(columns={'rxn_smiles':'smiles'})
+        df_wln.dropna()
 
         df_wln.to_pickle(f'reaction_desc_{self.output_name}_wln.pkl')
         df_wln.to_csv(f'reaction_desc_{self.output_name}_wln.csv')

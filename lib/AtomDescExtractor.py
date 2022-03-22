@@ -34,8 +34,18 @@ def reorder_entry(entry_wrong_order, ordering):
 
 
 def turn_elements_into_arrays(df, column_name):
-    df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: np.array([float(x)]))
+    # df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: np.array([float(x)]))
+    #df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: np.array([map(float, x)]))
+    print(column_name)
+    df[f'{column_name}'] = df[f'{column_name}'].apply(lambda x: apply_func(x))
 
+def apply_func(argument):
+    print(argument)
+    try:
+        print(np.array(list(map(float, argument))))
+        return np.array(list(map(float, argument)))
+    except TypeError:
+        return []
 
 def match_smiles(smiles, numbered_smiles_list):
     for numbered_smiles in numbered_smiles_list:
@@ -130,6 +140,9 @@ class AtomDescExtractor:
             morfeus_dict = morfeus_df.to_dict()
             self.df_desc['sasa'] = self.df_desc['smiles'].apply(lambda x: include_morfeus_data(x,morfeus_dict['sasa']))
             self.df_desc['pint'] = self.df_desc['smiles'].apply(lambda x: include_morfeus_data(x, morfeus_dict['pint']))
+
+    def return_valid_df_atoms(self):
+        return self.df_reactions
 
     def filter_df_reactions(self, reactions_file):
         compound_desc_list = self.df_desc['smiles'].values.tolist()

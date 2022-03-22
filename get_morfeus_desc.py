@@ -5,6 +5,14 @@ from morfeus.dispersion import Dispersion
 from morfeus.io import read_xyz
 import os
 import pandas as pd
+from argparse import ArgumentParser
+
+
+parser = ArgumentParser()
+parser.add_argument('--csv_file', type=str, required=True,
+                    help='input .csv file containing list of molecules')
+parser.add_argument('--xyz_folder', type=str, required=True,
+                    help='folder containing .xyz files for each molecule')
 
 
 def get_sasa(folder_path, filename):
@@ -32,11 +40,14 @@ def get_pint(folder_path, filename):
 
 
 if __name__ == '__main__':
-    df = pd.read_csv('reactants_cycloadd.csv')
-    df['sasa'] = df['id'].apply(lambda x: get_sasa('xyz_files', f'geometry_{x}.xyz'))
-    df['pint'] = df['id'].apply(lambda x: get_pint('xyz_files', f'geometry_{x}.xyz'))
+    args = parser.parse_args()
+    path = '/'.join(args.csv_file.split('/')[:-1])
+    df = pd.read_csv(args.csv_file)
+    df['sasa'] = df['id'].apply(lambda x: get_sasa(args.xyz_folder, f'geometry_{x}.xyz'))
+    df['pint'] = df['id'].apply(lambda x: get_pint(args.xyz_folder, f'geometry_{x}.xyz'))
 
     print(df.head())
 
-    df.to_csv('morfeus_desc.csv')
-    df.to_pickle('morfeus_desc.pkl') 
+    df.to_csv(f'{path}/morfeus_desc.csv')
+    df.to_pickle(f'{path}/morfeus_desc.pkl') 
+    

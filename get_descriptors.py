@@ -1,4 +1,5 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
+import pandas as pd
 
 from lib import RxnDescExtractor, AtomDescExtractor
 
@@ -43,3 +44,8 @@ if __name__ == '__main__':
         reaction_desc_extractor.output_reaction_descs_wln()
     if args.format == 'chemprop':
         reaction_desc_extractor.output_reaction_descs_chemprop()
+    
+    df_reactions_atom = atom_desc_extractor.return_valid_df_atoms()
+    df_reactions_react = reaction_desc_extractor.return_valid_df_reactions()
+    df_reactions = pd.merge(df_reactions_atom[["rxn_smiles"]], df_reactions_react, how="inner", on=["rxn_smiles"])
+    df_reactions.to_csv(f"{args.output_name}_data.csv")
