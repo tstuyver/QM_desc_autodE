@@ -15,6 +15,8 @@ parser.add_argument('--morfeus_file', type=str, required=False,
                     help='.csv file to read morfeus descs from')
 parser.add_argument('--format', type=str, default='wln',
                     help='options: "wln" (default) or "chemprop"')
+parser.add_argument('--all', dest='all', action='store_true',
+                    help='whether to get all versions of the reaction descriptors')
 
 
 if __name__ == '__main__':
@@ -40,12 +42,23 @@ if __name__ == '__main__':
     reaction_desc_extractor = RxnDescExtractor(args.desc_file, args.reactions_file, args.output_name)
     reaction_desc_extractor.determine_reaction_descs()
     
-    if args.format == 'wln':
-        reaction_desc_extractor.output_reaction_descs_wln()
-    if args.format == 'chemprop':
-        reaction_desc_extractor.output_reaction_descs_chemprop()
+    if args.all:
+        if args.format == 'wln':
+            reaction_desc_extractor.output_reaction_descs_wln(descriptor_list=['E_r', 'G', 'G_alt1', 'G_alt2', 'G_orb', 'G_alt1_orb', 
+                'G_alt2_orb', 'G_alt1_uncorr', 'G_alt2_uncorr', 'homo_1', 'lumo_1', 'homo_2', 'lumo_2']) 
+        elif args.format == 'chemprop':
+            reaction_desc_extractor.output_reaction_descs_chemprop(descriptor_list=['E_r', 'G', 'G_alt1', 'G_alt2', 'G_orb', 'G_alt1_orb', 
+                'G_alt2_orb', 'G_alt1_uncorr', 'G_alt2_uncorr', 'homo_1', 'lumo_1', 'homo_2', 'lumo_2'])
+    else:
+        if args.format == 'wln':
+            reaction_desc_extractor.output_reaction_descs_wln()
+        elif args.format == 'chemprop':
+            reaction_desc_extractor.output_reaction_descs_chemprop()    
     
     df_reactions_atom = atom_desc_extractor.return_valid_df_atoms()
     df_reactions_react = reaction_desc_extractor.return_valid_df_reactions()
     df_reactions = pd.merge(df_reactions_atom[["rxn_smiles"]], df_reactions_react, how="inner", on=["rxn_smiles"])
+    df_reactions = df_reactions.drop_duplicates(subset=["rxn_smiles"])
+    df_reactions = df_reactions[['rxn_id', 'rxn_smiles','solvent', 'temp','G_act']]
+    df_reactions.rename(columns={'rxn_id':'reaction_id', 'G_act':'DG_TS'}, inplace=True)
     df_reactions.to_csv(f"{args.output_name}_data.csv")

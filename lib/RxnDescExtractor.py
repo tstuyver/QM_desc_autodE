@@ -38,7 +38,16 @@ class RxnDescExtractor:
         self.df_reactions['G_alt1'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 1))
         self.df_reactions['G_alt2_orb'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_orbitals(x, 2))
         self.df_reactions['G_alt2'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 2))
-        
+
+        self.df_reactions['orbital_energies'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_orbital_energies(x))
+        self.df_reactions['homo_1'] = self.df_reactions['orbital_energies'].apply(lambda x: x[0])
+        self.df_reactions['lumo_1'] = self.df_reactions['orbital_energies'].apply(lambda x: x[1])
+        self.df_reactions['homo_2'] = self.df_reactions['orbital_energies'].apply(lambda x: x[2])
+        self.df_reactions['lumo_2'] = self.df_reactions['orbital_energies'].apply(lambda x: x[3]) 
+
+        self.df_reactions['G_alt1_uncorr'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 1, corr=False))
+        self.df_reactions['G_alt2_uncorr'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 2, corr=False))        
+
     def extract_descriptor_values(self):
         mol_desc = {'reactants_singlet': dict(zip(self.df_desc['smiles'], self.df_desc['SCF'])),
         'reactants_homo': dict(zip(self.df_desc['smiles'], self.df_desc['homo'])),
@@ -49,14 +58,28 @@ class RxnDescExtractor:
 
         return mol_desc
 
+    def get_orbital_energies(self, rxn_smiles):
+        reactants = rxn_smiles.split(">")[0].split(".")
+        orbital_energies = []
+        for reactant in reactants:
+            try: 
+                stripped_reactant = strip_atom_map_num(reactant)
+                orbital_energies.append(self.mol_desc['reactants_homo'][stripped_reactant])
+                orbital_energies.append(self.mol_desc['reactants_lumo'][stripped_reactant])
+            except Exception as e:
+                print(f'Error for {rxn_smiles}:{e}')
+                return [None, None, None, None]
+        
+        return orbital_energies
+
     def get_promotion_gap_orbitals(self, rxn_smiles):
         reactants = rxn_smiles.split(">")[0].split(".")
         promotion_energy = 0
         for reactant in reactants:
             try:
                 stripped_reactant = strip_atom_map_num(reactant)
-                promotion_energy += (self.mol_desc['reactants_homo'][stripped_reactant] - \
-                                    self.mol_desc['reactants_lumo'][stripped_reactant]) * hartree
+                promotion_energy += (self.mol_desc['reactants_lumo'][stripped_reactant] - \
+                                    self.mol_desc['reactants_homo'][stripped_reactant]) * hartree
             except Exception as e:
                 print(f'Error for {rxn_smiles}: {e}')
                 promotion_energy = None
@@ -102,7 +125,7 @@ class RxnDescExtractor:
 
         return ionisation_potential - electron_affinity
 
-    def get_promotion_gap_alt_scf(self, rxn_smiles, num):
+    def get_promotion_gap_alt_scf(self, rxn_smiles, num, corr=True):
         reactants = rxn_smiles.split(">")[0].split(".")
         for reactant in reactants:
             reactant_mol = Chem.MolFromSmiles(reactant)
@@ -112,7 +135,7 @@ class RxnDescExtractor:
                         dipole = strip_atom_map_num(reactant)
                         electron_affinity = (self.mol_desc['reactants_singlet'][dipole] - 
                                             self.mol_desc['reactants_minus'][dipole]) * hartree
-                        if electron_affinity < 0:
+                        if electron_affinity < 0 and corr:
                             electron_affinity = \
                                 (- (self.mol_desc['reactants_lumo'][dipole] + self.mol_desc['reactants_homo'][dipole]) \
                                 - (self.mol_desc['reactants_plus'][dipole] - self.mol_desc['reactants_singlet'][dipole])) * hartree
@@ -129,7 +152,7 @@ class RxnDescExtractor:
                         dipolarophile = strip_atom_map_num(reactant)
                         electron_affinity = (self.mol_desc['reactants_singlet'][dipolarophile] - 
                                             self.mol_desc['reactants_minus'][dipolarophile]) * hartree
-                        if electron_affinity < 0:
+                        if electron_affinity < 0 and corr:
                             electron_affinity = \
                                 (- (self.mol_desc['reactants_lumo'][dipolarophile] + self.mol_desc['reactants_homo'][dipolarophile]) \
                                 - (self.mol_desc['reactants_plus'][dipolarophile] - self.mol_desc['reactants_singlet'][dipolarophile])) * hartree
@@ -152,6 +175,7 @@ class RxnDescExtractor:
         df_wln = self.df_reactions[['rxn_smiles'] + [name for name in descriptor_list]]
         df_wln = df_wln.rename(columns={'rxn_smiles':'smiles'})
         df_wln.dropna()
+        df_wln = df_wln.drop_duplicates(subset=['smiles'])
 
         df_wln.to_pickle(f'reaction_desc_{self.output_name}_wln.pkl')
         df_wln.to_csv(f'reaction_desc_{self.output_name}_wln.csv')
