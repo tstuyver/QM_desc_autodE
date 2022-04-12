@@ -5,9 +5,9 @@ import subprocess
 
 parser = ArgumentParser()
 parser.add_argument(
-    "--tar_file", type=str, required=True, help="tar file to extract .xyz files from"
+    "--tar-file", type=str, required=True, help="tar file to extract .xyz files from"
 )
-parser.add_argument("--folder_name", type=str, default="XTB_opt", help="name of the folder to which the tar-archive is extracted")
+parser.add_argument("--folder-name", type=str, default="XTB_opt", help="name of the folder to which the tar-archive is extracted")
 
 if __name__ == "__main__":
     args = parser.parse_args()

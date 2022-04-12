@@ -17,7 +17,7 @@ parser.add_argument(
     "--ismiles", type=str, required=False, help="input smiles included in a .csv file"
 )
 parser.add_argument(
-    "--solvent_name",
+    "--solvent-name",
     type=str,
     default=None,
     help="whether or not to determine the descriptors in solvent",
@@ -25,24 +25,24 @@ parser.add_argument(
 
 # xtb optimization
 parser.add_argument(
-    "--xtb_folder", type=str, default="XTB_opt", help="folder for XTB optimization"
+    "--xtb-folder", type=str, default="XTB_opt", help="folder for XTB optimization"
 )
 parser.add_argument(
-    "--xtb_n_procs", type=int, default=20, help="number of process for optimization"
+    "--xtb-n-procs", type=int, default=20, help="number of process for optimization"
 )
 
 # DFT calculation
 parser.add_argument(
-    "--DFT_folder", type=str, default="DFT", help="folder for DFT calculation"
+    "--DFT-folder", type=str, default="DFT", help="folder for DFT calculation"
 )
 parser.add_argument(
-    "--DFT_theory",
+    "--DFT-theory",
     type=str,
     default="b3lyp/def2svp",
     help="level of theory for the DFT calculation",
 )
 parser.add_argument(
-    "--DFT_n_procs", type=int, default=20, help="number of process for DFT calculations"
+    "--DFT-n-procs", type=int, default=20, help="number of process for DFT calculations"
 )
 
 args = parser.parse_args()
@@ -77,14 +77,15 @@ logger.info("starting Gaussian single-point calculations for the optimized geome
 if not os.path.isdir(args.DFT_folder):
     os.mkdir(args.DFT_folder)
 
-qm_descriptors = []
+qm_descriptors_list = []
+failed_molecules = []
 for molecule in opt_molecules:
     try:
         shutil.copyfile(
             os.path.join(args.xtb_folder, molecule.xyz_file),
             os.path.join(args.DFT_folder, molecule.xyz_file),
         )
-        qm_descriptor = dft_scf(
+        qm_descriptors = dft_scf(
             args.DFT_folder,
             molecule,
             G16_PATH,
@@ -93,11 +94,12 @@ for molecule in opt_molecules:
             logger,
             args.solvent_name,
         )
-        qm_descriptors.append(qm_descriptor)
+        qm_descriptors_list.append(qm_descriptors)
     except Exception as e:
         logger.error(
             f"Gaussian single-point calculations for {os.path.splitext(molecule.xyz_file)[0]} failed: {e}"
         )
+        failed_molecules.append(molecule)
         try:
             for folder in [
                 os.path.join(args.DFT_folder, "neutral/"),
@@ -111,15 +113,57 @@ for molecule in opt_molecules:
         except Exception:
             continue
 
-qm_descriptors = pd.DataFrame(qm_descriptors)
-qm_descriptors.to_csv(f"{output_name}.csv")
-qm_descriptors.to_pickle(f"{output_name}.pkl")
+df_qm_descriptors = pd.DataFrame(qm_descriptors_list)
+df_qm_descriptors.to_csv(f"{output_name}.csv")
+df_qm_descriptors.to_pickle(f"{output_name}.pkl")
+
+#________________________________
+# This might not be necessary
+
+for molecule in failed_molecules:
+    try:
+        shutil.copyfile(
+            os.path.join(args.xtb_folder, molecule.xyz_file),
+            os.path.join(args.DFT_folder, molecule.xyz_file),
+        )
+        qm_descriptors = dft_scf(
+            args.DFT_folder,
+            molecule,
+            G16_PATH,
+            args.DFT_theory,
+            args.DFT_n_procs,
+            logger,
+            args.solvent_name,
+        )
+        qm_descriptors_list.append(qm_descriptors)
+    except Exception as e:
+        logger.error(
+            f"Gaussian single-point calculations for {os.path.splitext(molecule.xyz_file)[0]} failed: {e}"
+        )
+        try:
+           for folder in [
+                os.path.join(args.DFT_folder, "neutral/"),
+                os.path.join(args.DFT_folder, "minus1/"),
+                os.path.join(args.DFT_folder, "plus1/"),
+                os.path.join(args.DFT_folder, "multiplicity/"),
+            ]:
+                for fname in os.listdir(folder):
+                    if "core" in fname:
+                        os.remove(os.path.join(folder, fname))
+        except Exception:
+            continue 
+
+df_qm_descriptors = pd.DataFrame(qm_descriptors_list)
+df_qm_descriptors.to_csv(f"{output_name}.csv")
+df_qm_descriptors.to_pickle(f"{output_name}.pkl")
+
+#________________________________
 
 subprocess.run(
     [
         "tar",
-        "-zcf",
-        os.path.join(pwd, f"xtb_{name}.tar"),
+        "cvzf",
+        os.path.join(pwd, f"xtb_{name}.tar.gz"),
         os.path.join(pwd, args.xtb_folder),
     ]
 )
@@ -128,8 +172,8 @@ subprocess.run(["rm", "-r", os.path.join(pwd, args.xtb_folder)])
 subprocess.run(
     [
         "tar",
-        "-zcf",
-        os.path.join(pwd, f"dft_{name}.tar"),
+        "cvzf",
+        os.path.join(pwd, f"dft_{name}.tar.gz"),
         os.path.join(pwd, args.DFT_folder),
     ]
 )

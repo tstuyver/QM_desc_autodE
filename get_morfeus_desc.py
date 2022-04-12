@@ -9,9 +9,9 @@ from argparse import ArgumentParser
 
 
 parser = ArgumentParser()
-parser.add_argument('--csv_file', type=str, required=True,
+parser.add_argument('--csv-file', type=str, required=True,
                     help='input .csv file containing list of molecules')
-parser.add_argument('--xyz_folder', type=str, required=True,
+parser.add_argument('--xyz-folder', type=str, required=True,
                     help='folder containing .xyz files for each molecule')
 
 

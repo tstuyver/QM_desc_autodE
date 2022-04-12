@@ -28,25 +28,26 @@ class RxnDescExtractor:
         self.reaction_desc = self.determine_reaction_descs()
 
     def return_valid_df_reactions(self):
-        df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles', 'solvent', 'temp', 'G_act']]
+        #df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles', 'solvent', 'temp', 'G_act']]
+        df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles']]
         return df_return
 
     def determine_reaction_descs(self):
         self.df_reactions['G_orb'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_orbitals(x))
         self.df_reactions['G'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_scf(x))
+        self.df_reactions['G_alt1'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 1, corr=False))
+        self.df_reactions['G_alt2'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 2, corr=False)) 
+
         self.df_reactions['G_alt1_orb'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_orbitals(x, 1))
-        self.df_reactions['G_alt1'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 1))
+        self.df_reactions['G_alt1_corr'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 1))
         self.df_reactions['G_alt2_orb'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_orbitals(x, 2))
-        self.df_reactions['G_alt2'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 2))
+        self.df_reactions['G_alt2_corr'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 2))
 
         self.df_reactions['orbital_energies'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_orbital_energies(x))
         self.df_reactions['homo_1'] = self.df_reactions['orbital_energies'].apply(lambda x: x[0])
         self.df_reactions['lumo_1'] = self.df_reactions['orbital_energies'].apply(lambda x: x[1])
         self.df_reactions['homo_2'] = self.df_reactions['orbital_energies'].apply(lambda x: x[2])
-        self.df_reactions['lumo_2'] = self.df_reactions['orbital_energies'].apply(lambda x: x[3]) 
-
-        self.df_reactions['G_alt1_uncorr'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 1, corr=False))
-        self.df_reactions['G_alt2_uncorr'] = self.df_reactions['rxn_smiles'].apply(lambda x: self.get_promotion_gap_alt_scf(x, 2, corr=False))        
+        self.df_reactions['lumo_2'] = self.df_reactions['orbital_energies'].apply(lambda x: x[3])        
 
     def extract_descriptor_values(self):
         mol_desc = {'reactants_singlet': dict(zip(self.df_desc['smiles'], self.df_desc['SCF'])),

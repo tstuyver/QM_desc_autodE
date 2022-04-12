@@ -24,13 +24,16 @@ def verify_smiles(numbered_rxn_smiles, compound_desc_list):
 
 
 def reorder_entry(entry_wrong_order, ordering):
-    entry_correct_order = [0] * len(entry_wrong_order)
-    for i in range(len(ordering)):
-        entry_correct_order[ordering[i]] = entry_wrong_order[i]
-    for j in range(len(ordering), len(entry_wrong_order)):
-        entry_correct_order[j] = entry_wrong_order[j]
+    try:
+        entry_correct_order = [0] * len(entry_wrong_order)
+        for i in range(len(ordering)):
+            entry_correct_order[ordering[i]] = entry_wrong_order[i]
+        for j in range(len(ordering), len(entry_wrong_order)):
+            entry_correct_order[j] = entry_wrong_order[j]
 
-    return np.array(entry_correct_order)
+        return np.array(entry_correct_order)
+    except IndexError:
+        return None
 
 
 def turn_elements_into_arrays(df):
@@ -132,7 +135,7 @@ class AtomDescExtractor:
             morfeus_df['sasa'] = morfeus_df['sasa'].apply(lambda x: np.array(list(map(float, str(x).strip('[]\n').split()))))
             morfeus_df['pint'] = morfeus_df['pint'].apply(lambda x: np.array(list(map(float, str(x).strip('[]\n').split()))))
             morfeus_dict = morfeus_df.to_dict()
-            self.df_desc['sasa'] = self.df_desc['smiles'].apply(lambda x: include_morfeus_data(x,morfeus_dict['sasa']))
+            self.df_desc['sasa'] = self.df_desc['smiles'].apply(lambda x: include_morfeus_data(x, morfeus_dict['sasa']))
             self.df_desc['pint'] = self.df_desc['smiles'].apply(lambda x: include_morfeus_data(x, morfeus_dict['pint']))
 
     def return_valid_df_atoms(self):
@@ -176,6 +179,7 @@ class AtomDescExtractor:
                 final_columns.append('bond_length')
 
         self.df_desc = df_desc_reordered[final_columns]
+        self.df_desc.dropna(inplace=True)
 
     def output_atom_descs_chemprop(self, descriptor_list=['partial_charge', 'spin_dens', 'fukui_elec', 'NMR',
                                                             'fukui_neu', 'spin_dens_triplet']):

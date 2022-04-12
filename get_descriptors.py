@@ -5,13 +5,13 @@ from lib import RxnDescExtractor, AtomDescExtractor
 
 
 parser = ArgumentParser()
-parser.add_argument('--desc_file', type=str, required=True,
+parser.add_argument('--desc-file', type=str, required=True,
                     help='.pkl file to read descs from')
-parser.add_argument('--reactions_file', type=str, required=True,
+parser.add_argument('--reactions-file', type=str, required=True,
                     help='.csv file to read rxn_smiles from')
-parser.add_argument('--output_name', type=str, required=True,
+parser.add_argument('--output-name', type=str, required=True,
                     help='base name for output file')
-parser.add_argument('--morfeus_file', type=str, required=False,
+parser.add_argument('--morfeus-file', type=str, required=False,
                     help='.csv file to read morfeus descs from')
 parser.add_argument('--format', type=str, default='wln',
                     help='options: "wln" (default) or "chemprop"')
@@ -44,11 +44,11 @@ if __name__ == '__main__':
     
     if args.all:
         if args.format == 'wln':
-            reaction_desc_extractor.output_reaction_descs_wln(descriptor_list=['E_r', 'G', 'G_alt1', 'G_alt2', 'G_orb', 'G_alt1_orb', 
-                'G_alt2_orb', 'G_alt1_uncorr', 'G_alt2_uncorr', 'homo_1', 'lumo_1', 'homo_2', 'lumo_2']) 
+            reaction_desc_extractor.output_reaction_descs_wln(descriptor_list=['G', 'G_alt1', 'G_alt2', 'G_orb', 'G_alt1_orb', 
+                'G_alt2_orb', 'G_alt1_corr', 'G_alt2_corr', 'homo_1', 'lumo_1', 'homo_2', 'lumo_2'])  # 'E_r'
         elif args.format == 'chemprop':
-            reaction_desc_extractor.output_reaction_descs_chemprop(descriptor_list=['E_r', 'G', 'G_alt1', 'G_alt2', 'G_orb', 'G_alt1_orb', 
-                'G_alt2_orb', 'G_alt1_uncorr', 'G_alt2_uncorr', 'homo_1', 'lumo_1', 'homo_2', 'lumo_2'])
+            reaction_desc_extractor.output_reaction_descs_chemprop(descriptor_list=['G', 'G_alt1', 'G_alt2', 'G_orb', 'G_alt1_orb', 
+                'G_alt2_orb', 'G_alt1_corr', 'G_alt2_corr', 'homo_1', 'lumo_1', 'homo_2', 'lumo_2']) # 'E_r'
     else:
         if args.format == 'wln':
             reaction_desc_extractor.output_reaction_descs_wln()
@@ -59,6 +59,6 @@ if __name__ == '__main__':
     df_reactions_react = reaction_desc_extractor.return_valid_df_reactions()
     df_reactions = pd.merge(df_reactions_atom[["rxn_smiles"]], df_reactions_react, how="inner", on=["rxn_smiles"])
     df_reactions = df_reactions.drop_duplicates(subset=["rxn_smiles"])
-    df_reactions = df_reactions[['rxn_id', 'rxn_smiles','solvent', 'temp','G_act']]
-    df_reactions.rename(columns={'rxn_id':'reaction_id', 'G_act':'DG_TS'}, inplace=True)
+    #df_reactions = df_reactions[['rxn_id', 'rxn_smiles','solvent', 'temp','G_act']]
+    #df_reactions.rename(columns={'rxn_id':'reaction_id', 'G_act':'DG_TS'}, inplace=True)
     df_reactions.to_csv(f"{args.output_name}_data.csv")
