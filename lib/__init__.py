@@ -1,4 +1,4 @@
-from .dftscf import dft_scf
+from .dftscf import dft_scf, extract_descriptors
 from .file_parser import xyz2com
 from .g16_log import G16Log, XtbLog
 from .grab_QM_descriptors import read_log

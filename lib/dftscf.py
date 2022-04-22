@@ -2,6 +2,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 import os
 import subprocess
+
 from .file_parser import xyz2com
 from .grab_QM_descriptors import read_log
 
@@ -114,44 +115,7 @@ def dft_scf(folder, molecule, g16_path, level_of_theory, n_procs, logger, solven
                 QM_descriptors[jobtype] = read_log(logfile, jobtype, smiles)
             os.chdir(pwd)
 
-        QM_descriptor_return = QM_descriptors["neutral"]
-
-        # charges and fukui indices
-        for charge in ["mulliken_charge", "hirshfeld_charges", "NPA_Charge"]:
-            QM_descriptor_return["{}_plus1".format(charge)] = QM_descriptors["plus1"][
-                charge
-            ]
-            QM_descriptor_return["{}_minus1".format(charge)] = QM_descriptors["minus1"][
-                charge
-            ]
-
-            QM_descriptor_return["{}_fukui_elec".format(charge)] = (
-                QM_descriptors["neutral"][charge] - QM_descriptors["minus1"][charge]
-            )
-            QM_descriptor_return["{}_fukui_neu".format(charge)] = (
-                QM_descriptors["plus1"][charge] - QM_descriptors["neutral"][charge]
-            )
-
-            # spin density
-        for spin in [
-            "mulliken_spin_density",
-            "hirshfeld_spin_density",
-            "NPA_spin_density",
-        ]:
-            QM_descriptor_return["{}_plus1".format(spin)] = QM_descriptors["plus1"][
-                spin
-            ]
-            QM_descriptor_return["{}_minus1".format(spin)] = QM_descriptors["minus1"][
-                spin
-            ]
-            QM_descriptor_return["{}_multiplicity".format(spin)] = QM_descriptors[
-                "multiplicity"
-            ][spin]
-
-        # SCF
-        QM_descriptor_return["SCF_plus1"] = QM_descriptors["plus1"]["SCF"]
-        QM_descriptor_return["SCF_minus1"] = QM_descriptors["minus1"]["SCF"]
-        QM_descriptor_return["SCF_multiplicity"] = QM_descriptors["multiplicity"]["SCF"]
+        QM_descriptor_return = construct_qm_descriptor_return(QM_descriptors)
 
         os.remove(molecule.xyz_file)
         logger.info(
@@ -159,5 +123,70 @@ def dft_scf(folder, molecule, g16_path, level_of_theory, n_procs, logger, solven
         )
     finally:
         os.chdir(parent_folder)
+
+    return QM_descriptor_return
+
+
+def construct_qm_descriptor_return(QM_descriptors):
+    QM_descriptor_return = QM_descriptors["neutral"]
+
+    # charges and fukui indices
+    for charge in ["mulliken_charge", "hirshfeld_charges", "NPA_Charge"]:
+        QM_descriptor_return["{}_plus1".format(charge)] = QM_descriptors["plus1"][
+            charge
+        ]
+        QM_descriptor_return["{}_minus1".format(charge)] = QM_descriptors["minus1"][
+            charge
+        ]
+
+        QM_descriptor_return["{}_fukui_elec".format(charge)] = (
+            QM_descriptors["neutral"][charge] - QM_descriptors["minus1"][charge]
+        )
+        QM_descriptor_return["{}_fukui_neu".format(charge)] = (
+            QM_descriptors["plus1"][charge] - QM_descriptors["neutral"][charge]
+        )
+
+    # spin density
+    for spin in [
+        "mulliken_spin_density",
+        "hirshfeld_spin_density",
+        "NPA_spin_density",
+    ]:
+        QM_descriptor_return["{}_plus1".format(spin)] = QM_descriptors["plus1"][
+            spin
+        ]
+        QM_descriptor_return["{}_minus1".format(spin)] = QM_descriptors["minus1"][
+            spin
+        ]
+        QM_descriptor_return["{}_multiplicity".format(spin)] = QM_descriptors[
+            "multiplicity"
+        ][spin]
+
+    # SCF
+    QM_descriptor_return["SCF_plus1"] = QM_descriptors["plus1"]["SCF"]
+    QM_descriptor_return["SCF_minus1"] = QM_descriptors["minus1"]["SCF"]
+    QM_descriptor_return["SCF_multiplicity"] = QM_descriptors["multiplicity"]["SCF"]
+
+    return QM_descriptor_return
+
+
+def extract_descriptors(molecule, df):
+    pwd = os.getcwd()
+    try:
+        smiles = df.iloc[int(molecule.split('_')[-1])]['smiles']
+        QM_descriptors = {}
+        for jobtype in ["neutral", "plus1", "minus1", "multiplicity"]:
+            os.chdir(pwd)
+            os.chdir(jobtype)
+            logfile = molecule + ".log"
+            QM_descriptors[jobtype] = read_log(logfile, jobtype, smiles)
+
+        QM_descriptor_return = construct_qm_descriptor_return(QM_descriptors)
+        os.chdir(pwd)
+
+    except Exception as e:
+        print(e)
+        os.chdir(pwd)
+        return None
 
     return QM_descriptor_return
