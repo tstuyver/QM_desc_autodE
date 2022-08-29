@@ -5,6 +5,14 @@ import shutil
 
 
 class Molecule:
+    """Class to perform autodE geometry generation for individual molecules.
+
+    Attributes:
+        id (str): molecule ID
+        smiles (str): molecule SMILES
+        solvent (str): Solvent in which the molecule is present.
+    """
+
     def __init__(self, id, smiles, solvent):
         self.smiles = smiles
         self.id = id
@@ -50,9 +58,11 @@ class Molecule:
             os.chdir(self.xtb_folder)
         except Exception:
             os.chdir(self.xtb_folder)
+        os.remove(dir_path)
 
 
 def get_geometry(mol):
+    """Get geometry of single molecule."""
     mol.generate_structure()
     if mol.xyz_file is not None:
         return mol, mol.id
@@ -61,6 +71,16 @@ def get_geometry(mol):
 
 
 def get_opt_molecules(args, molecule_list, logger):
+    """_summary_
+
+    Args:
+        args (Namespace): command line arguments
+        molecule_list (List[Molecule]): list of molecules for which a geometry needs to be determined
+        logger (Logging.Logger): logger
+
+    Returns:
+        opt_molecules (List[Molecule, str]): list of molecules with optimized geometry and the associated ID
+    """
     opt_molecules = []
 
     with ProcessPool(max_workers=args.xtb_n_procs) as pool:
@@ -94,6 +114,6 @@ def get_opt_molecules(args, molecule_list, logger):
         pool.close()
         pool.join()
 
-    #opt_molecules = list(filter(None, opt_molecules))
+    # opt_molecules = list(filter(None, opt_molecules))
 
     return opt_molecules

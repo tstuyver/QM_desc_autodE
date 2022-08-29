@@ -152,12 +152,8 @@ def construct_qm_descriptor_return(QM_descriptors):
         "hirshfeld_spin_density",
         "NPA_spin_density",
     ]:
-        QM_descriptor_return["{}_plus1".format(spin)] = QM_descriptors["plus1"][
-            spin
-        ]
-        QM_descriptor_return["{}_minus1".format(spin)] = QM_descriptors["minus1"][
-            spin
-        ]
+        QM_descriptor_return["{}_plus1".format(spin)] = QM_descriptors["plus1"][spin]
+        QM_descriptor_return["{}_minus1".format(spin)] = QM_descriptors["minus1"][spin]
         QM_descriptor_return["{}_multiplicity".format(spin)] = QM_descriptors[
             "multiplicity"
         ][spin]
@@ -173,7 +169,7 @@ def construct_qm_descriptor_return(QM_descriptors):
 def extract_descriptors(molecule, df):
     pwd = os.getcwd()
     try:
-        smiles = df.iloc[int(molecule.split('_')[-1])]['smiles']
+        smiles = df.iloc[int(molecule.split("_")[-1])]["smiles"]
         QM_descriptors = {}
         for jobtype in ["neutral", "plus1", "minus1", "multiplicity"]:
             os.chdir(pwd)

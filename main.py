@@ -25,9 +25,9 @@ parser.add_argument(
     help="whether or not to determine the descriptors in solvent",
 )
 parser.add_argument(
-    "--resume-fail", 
-    action='store_true',
-    help="whether to just resume in case of previous failure"
+    "--resume-fail",
+    action="store_true",
+    help="whether to just resume in case of previous failure",
 )
 
 # xtb optimization
@@ -35,7 +35,7 @@ parser.add_argument(
     "--xtb-folder", type=str, default="XTB_opt", help="folder for XTB optimization"
 )
 parser.add_argument(
-    "--xtb-n-procs", type=int, default=20, help="number of process for optimization"
+    "--xtb-n-procs", type=int, default=48, help="number of process for optimization"
 )
 
 # DFT calculation
@@ -49,7 +49,7 @@ parser.add_argument(
     help="level of theory for the DFT calculation",
 )
 parser.add_argument(
-    "--DFT-n-procs", type=int, default=20, help="number of process for DFT calculations"
+    "--DFT-n-procs", type=int, default=48, help="number of process for DFT calculations"
 )
 
 
@@ -93,10 +93,11 @@ def get_qm_descriptors(args, opt_molecules):
 
     return qm_descriptors_list, failed_molecules
 
+
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    # set autodE variables 
+    # set autodE variables
     ade.Config.n_cores = args.xtb_n_procs
     ade.Config.hmethod_conformers = False
 
@@ -124,7 +125,9 @@ if __name__ == "__main__":
         os.chdir(pwd)
 
         # G16 DFT calculation
-        logger.info("starting Gaussian single-point calculations for the optimized geometries")
+        logger.info(
+            "starting Gaussian single-point calculations for the optimized geometries"
+        )
         if not os.path.isdir(args.DFT_folder):
             os.mkdir(args.DFT_folder)
 
@@ -132,9 +135,15 @@ if __name__ == "__main__":
 
     # resume after time out or failure
     if args.resume_fail:
-        opt_molecules = [os.path.splitext(os.path.basename(file_name))[0] 
-            for file_name in os.listdir(args.xtb_folder) if file_name.endswith('.xyz')]
+        logger.info("resuming descriptor computation")
+        # print(os.listdir(args.xtb_folder))
+        opt_molecules = [
+            os.path.splitext(os.path.basename(file_name))[0]
+            for file_name in os.listdir(args.xtb_folder)
+            if file_name.endswith(".xyz")
+        ]
 
+        # print(opt_molecules)
         opt_molecules.sort()
         qm_descriptors_list = []
         ids_to_do = []
@@ -150,15 +159,23 @@ if __name__ == "__main__":
 
         os.chdir(pwd)
         molecule_list = []
-        
+
+        print(ids_to_do)
         for id in ids_to_do:
-            molecule_list.append(Molecule(df.iloc[int(id.split('_')[-1])]['id'], 
-                df.iloc[int(id.split('_')[-1])]['smiles'], args.solvent_name))
-        
+            molecule_list.append(
+                Molecule(
+                    df.iloc[int(id.split("_")[-1])]["id"],
+                    df.iloc[int(id.split("_")[-1])]["smiles"],
+                    args.solvent_name,
+                )
+            )
+
         for molecule in molecule_list:
             molecule.xyz_file = f"geometry_{molecule.id}.xyz"
 
-        qm_descriptors_list_tmp, failed_molecules = get_qm_descriptors(args, molecule_list)
+        qm_descriptors_list_tmp, failed_molecules = get_qm_descriptors(
+            args, molecule_list
+        )
         for qm_descriptors in qm_descriptors_list_tmp:
             qm_descriptors_list.append(qm_descriptors)
 
@@ -174,7 +191,7 @@ if __name__ == "__main__":
             os.path.join(pwd, args.xtb_folder),
         ]
     )
-    #subprocess.run(["rm", "-r", os.path.join(pwd, args.xtb_folder)])
+    # subprocess.run(["rm", "-r", os.path.join(pwd, args.xtb_folder)])
 
     subprocess.run(
         [
@@ -184,4 +201,4 @@ if __name__ == "__main__":
             os.path.join(pwd, args.DFT_folder),
         ]
     )
-    #subprocess.run(["rm", "-r", os.path.join(pwd, args.DFT_folder)])
+    # subprocess.run(["rm", "-r", os.path.join(pwd, args.DFT_folder)])
