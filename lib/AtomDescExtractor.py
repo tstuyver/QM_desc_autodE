@@ -243,6 +243,7 @@ class AtomDescExtractor:
         return self.df_reactions
 
     def filter_df_reactions(self, reactions_file):
+        """Return those reactions for which descriptors are available."""
         compound_desc_list = self.df_desc["smiles"].values.tolist()
         df_reactions = pd.read_csv(reactions_file)
         df_reactions["desc_avail"] = df_reactions["rxn_smiles"].apply(
@@ -252,6 +253,7 @@ class AtomDescExtractor:
         return df_reactions[df_reactions["desc_avail"]]
 
     def reorder_df_desc(self):
+        """Reorder the descriptors."""
         numbered_smiles_list = []
         for rxn_smiles in self.df_reactions["rxn_smiles"].values.tolist():
             for smiles in rxn_smiles.split(">")[0].split("."):
@@ -318,6 +320,7 @@ class AtomDescExtractor:
             "spin_dens_triplet",
         ],
     ):
+        """Output the reaction descriptors in chemprop format."""
         df_chemprop = self.df_desc[[name for name in descriptor_list]]
         for name in descriptor_list:
             df_chemprop[name] = turn_elements_into_arrays(df_chemprop[name])
@@ -338,6 +341,7 @@ class AtomDescExtractor:
             "bond_length",
         ],
     ):
+        """Output the reaction descriptors in wln format."""
         df_wln = self.df_desc[["smiles"] + [name for name in descriptor_list]]
 
         df_wln.to_pickle(f"atom_desc_{self.output_name}_wln.pkl", protocol=4)
