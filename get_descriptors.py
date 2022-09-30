@@ -31,6 +31,12 @@ parser.add_argument(
     action="store_true",
     help="whether to get all versions of the reaction descriptors",
 )
+parser.add_argument(
+    "--screening-mode",
+    dest="screening_mode",
+    action="store_true",
+    help="whether to include the target in the data-file",
+)
 
 
 if __name__ == "__main__":
@@ -80,7 +86,7 @@ if __name__ == "__main__":
 
     # extract and write reaction descriptors
     reaction_desc_extractor = RxnDescExtractor(
-        args.desc_file, args.reactions_file, args.output_name
+        args.desc_file, args.reactions_file, args.output_name, args.screening_mode
     )
     reaction_desc_extractor.determine_reaction_descs()
 
@@ -135,6 +141,7 @@ if __name__ == "__main__":
         on=["rxn_smiles"],
     )
     df_reactions = df_reactions.drop_duplicates(subset=["rxn_smiles"])
-    # df_reactions = df_reactions[['rxn_id', 'rxn_smiles','solvent', 'temp','G_act']]
-    df_reactions.rename(columns={"G_act": "DG_TS"}, inplace=True)
+    if not args.screening_mode:
+        df_reactions = df_reactions[['rxn_id', 'rxn_smiles','solvent', 'temp','G_act',"G_r"]]
+        df_reactions.rename(columns={"G_act": "DG_TS"}, inplace=True)
     df_reactions.to_csv(f"{args.output_name}_data.csv")

@@ -44,12 +44,14 @@ class RxnDescExtractor:
         desc_file (str): path to the descriptor .pkl file
         reactions_file (str): path to the dataframe containing all the reaction SMILES
         output_name (str): name of the output_file to be created
+        screening_mode (bool): whether targets should be included in the dataset-file
     """
 
-    def __init__(self, desc_file, reactions_file, output_name):
+    def __init__(self, desc_file, reactions_file, output_name, screening_mode=False):
         self.df_desc = pd.read_pickle(desc_file)
         self.df_reactions = pd.read_csv(reactions_file)
         self.output_name = output_name
+        self.screening_mode = screening_mode
 
         self.mol_desc = self.extract_descriptor_values()
 
@@ -57,8 +59,10 @@ class RxnDescExtractor:
 
     def return_valid_df_reactions(self):
         """Drop invalid reaction SMILES"""
-        # df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles', 'solvent', 'temp', 'G_act', 'G_r']]
-        df_return = self.df_reactions.dropna()[["rxn_id", "rxn_smiles"]]
+        if not self.screening_mode:
+            df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles', 'solvent', 'temp', 'G_act', 'G_r']]
+        else:
+            df_return = self.df_reactions.dropna()[["rxn_id", "rxn_smiles"]]
         return df_return
 
     def determine_reaction_descs(self):
