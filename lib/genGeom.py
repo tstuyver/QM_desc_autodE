@@ -58,7 +58,7 @@ class Molecule:
             os.chdir(self.xtb_folder)
         except Exception:
             os.chdir(self.xtb_folder)
-        os.remove(dir_path)
+        shutil.rmtree(dir_path)
 
 
 def get_geometry(mol):
