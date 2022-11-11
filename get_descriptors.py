@@ -107,7 +107,7 @@ if __name__ == "__main__":
                     "homo_2",
                     "lumo_2",
                 ]
-            )  # 'E_r'
+            )
         elif args.format == "chemprop":
             reaction_desc_extractor.output_reaction_descs_chemprop(
                 descriptor_list=[
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                     "homo_2",
                     "lumo_2",
                 ]
-            )  # 'E_r'
+            )
     else:
         if args.format == "wln":
             reaction_desc_extractor.output_reaction_descs_wln()
@@ -142,6 +142,8 @@ if __name__ == "__main__":
     )
     df_reactions = df_reactions.drop_duplicates(subset=["rxn_smiles"])
     if not args.screening_mode:
-        df_reactions = df_reactions[['rxn_id', 'rxn_smiles','solvent', 'temp','G_act',"G_r"]]
+        df_reactions = df_reactions[
+            ["rxn_id", "rxn_smiles", "solvent", "temp", "G_act", "G_r"]
+        ]
         df_reactions.rename(columns={"G_act": "DG_TS"}, inplace=True)
     df_reactions.to_csv(f"{args.output_name}_data.csv")

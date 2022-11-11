@@ -60,7 +60,9 @@ class RxnDescExtractor:
     def return_valid_df_reactions(self):
         """Drop invalid reaction SMILES"""
         if not self.screening_mode:
-            df_return = self.df_reactions.dropna()[['rxn_id', 'rxn_smiles', 'solvent', 'temp', 'G_act', 'G_r']]
+            df_return = self.df_reactions.dropna()[
+                ["rxn_id", "rxn_smiles", "solvent", "temp", "G_act", "G_r"]
+            ]
         else:
             df_return = self.df_reactions.dropna()[["rxn_id", "rxn_smiles"]]
         return df_return

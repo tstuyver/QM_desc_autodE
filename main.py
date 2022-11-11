@@ -11,8 +11,7 @@ from lib import get_opt_molecules
 from lib import dft_scf, extract_descriptors
 from lib import read_log
 
-# G16_PATH = "/home/gridsan/tstuyver/RMG_shared/Software/gaussian/g16"
-G16_PATH = "/home/software/gaussian/16.c01/g16/"
+G16_PATH = "XXX"
 
 parser = ArgumentParser()
 parser.add_argument(
@@ -160,7 +159,6 @@ if __name__ == "__main__":
         os.chdir(pwd)
         molecule_list = []
 
-        print(ids_to_do)
         for id in ids_to_do:
             molecule_list.append(
                 Molecule(
@@ -191,7 +189,7 @@ if __name__ == "__main__":
             os.path.join(pwd, args.xtb_folder),
         ]
     )
-    # subprocess.run(["rm", "-r", os.path.join(pwd, args.xtb_folder)])
+    subprocess.run(["rm", "-r", os.path.join(pwd, args.xtb_folder)])
 
     subprocess.run(
         [
@@ -201,4 +199,4 @@ if __name__ == "__main__":
             os.path.join(pwd, args.DFT_folder),
         ]
     )
-    # subprocess.run(["rm", "-r", os.path.join(pwd, args.DFT_folder)])
+    subprocess.run(["rm", "-r", os.path.join(pwd, args.DFT_folder)])
