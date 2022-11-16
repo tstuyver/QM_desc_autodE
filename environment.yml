@@ -1,4 +1,4 @@
-name: QM_descriptors
+name: descriptors
 
 channels:
   - rdkit
@@ -11,3 +11,5 @@ dependencies:
   - numpy
   - tqdm
   - pandas=1.1.0
+  - pebble
+  - xtb

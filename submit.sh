@@ -9,12 +9,12 @@
 #SBATCH --output=dipoles
 
 source /home/tstuyver/.bashrc
-conda activate QM_descriptors
+conda activate descriptors
 module load gaussian/16.c01
 GAUSS_SCRDIR=/nobackup1/tstuyver//$SLURM_JOB_NAME-$SLURM_JOB_ID
 mkdir -p $GAUSS_SCRDIR
 chmod 750 $GAUSS_SCRDIR
 
-python main.py --ismiles dipoles.csv --DFT-folder dipoles_DFT --xtb-folder dipoles_XTB_opt --resume-fail
+python main.py --ismiles dipoles_test.csv --DFT-folder dipoles_DFT --xtb-folder dipoles_XTB_opt
 
 rm -rf $GAUSS_SCRDIR
