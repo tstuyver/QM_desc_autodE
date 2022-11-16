@@ -1,0 +1,6 @@
+,id,smiles
+0,dipole_0,CNC(=O)C(=[NH+][C-](C(C)=O)C(=O)OC)c1ccccc1
+1,dipole_1,COC(=O)C(C(C)=O)=[N+](C)[C-](C)C#N
+2,dipole_2,CC(=O)C(=[O+][C-](C#N)C#N)c1ccccc1
+3,dipole_3,C[C-]([O+]=C(C#N)C#N)c1ccccc1
+
